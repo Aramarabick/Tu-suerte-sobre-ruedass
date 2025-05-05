@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rifa de Autos y Trocas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-image: url('https://images.unsplash.com/photo-1606351657160-3e964fa6df38?auto=format&fit=crop&w=1600&q=80');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      backdrop-filter: blur(4px);
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 30px auto;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .number-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 6px;
+      margin-top: 15px;
+    }
+
+    .number-grid button {
+      padding: 8px;
+      background-color: #e0e0e0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .number-grid button:hover {
+      background-color: #d0d0d0;
+    }
+
+    .number-grid button.selected {
+      background-color: #4CAF50;
+      color: white;
+      font-weight: bold;
+    }
+
+    .actions {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .actions button {
+      padding: 12px 20px;
+      margin: 6px;
+      border: none;
+      border-radius: 8px;
+      background-color: #1976D2;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .actions button:hover {
+      background-color: #125a9c;
+    }
+
+    .summary {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 1.1em;
+    }
+
+    #payment-details {
+      margin-top: 25px;
+      text-align: center;
+    }
+
+    #payment-details button {
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #payment-details button:hover {
+      background-color: #3e8e41;
+    }
+
+    .buy-now {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .buy-now button {
+      background-color: #FF5722;
+      color: white;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .buy-now button:hover {
+      background-color: #e64a19;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Rifa de Autos y Trocas</h1>
+    <p>Costo por boleto: $15 MXN</p>
+    <p>Límite de compra: 100 boletos por persona</p>
+
+    <div class="actions">
+      <button onclick="selectRandomNumbers()">Generar números al azar</button>
+      <button onclick="clearSelection()">Limpiar selección</button>
+    </div>
+
+    <div class="number-grid" id="numberGrid"></div>
+
+    <div class="summary">
+      <p id="selectedCount">Boletos seleccionados: 0</p>
+      <p id="totalCost">Total a pagar: $0 MXN</p>
+    </div>
+
+    <div class="buy-now">
+      <button onclick="alert('Para completar tu compra:\n1. Realiza el pago desde tu app bancaria usando la CLABE.\n2. Envía el comprobante por Facebook.\n\n¡Gracias por participar!')">Comprar ahora</button>
+    </div>
+
+    <div id="payment-details">
+      <h3>Instrucciones de pago por SPEI:</h3>
+      <p>Realiza tu pago mediante transferencia con la siguiente CLABE:</p>
+      <p><strong>Banco:</strong> Bancoppel</p>
+      <p><strong>Nombre del titular:</strong> Juan Carlos</p>
+      <p><strong>CLABE interbancaria:</strong> <span id="clabe">137060100549036050</span></p>
+      <button onclick="copyClabe()">Copiar CLABE</button>
+      <p>Una vez realizado el pago, envía tu comprobante a nuestro Facebook:</p>
+      <a href="https://www.facebook.com/profile.php?id=61575931982035&mibextid=ZbWKwL" target="_blank">
+        <button>Ir a Facebook</button>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const MAX_NUMBERS = 5000;
+    const MAX_SELECTION = 100;
+    const COST_PER_TICKET = 15;
+
+    const numberGrid = document.getElementById('numberGrid');
+    const selectedCount = document.getElementById('selectedCount');
+    const totalCost = document.getElementById('totalCost');
+    let selectedNumbers = new Set();
+
+    function createGrid() {
+      for (let i = 1; i <= MAX_NUMBERS; i++) {
+        const button = document.createElement('button');
+        button.innerText = String(i).padStart(4, "0");
+        button.onclick = () => toggleNumber(i, button);
+        numberGrid.appendChild(button);
+      }
+    }
+
+    function toggleNumber(num, button) {
+      if (selectedNumbers.has(num)) {
+        selectedNumbers.delete(num);
+        button.classList.remove('selected');
+      } else {
+        if (selectedNumbers.size >= MAX_SELECTION) {
+          alert("Máximo 100 boletos por persona.");
+          return;
+        }
+        selectedNumbers.add(num);
+        button.classList.add('selected');
+      }
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const count = selectedNumbers.size;
+      let cost = count * COST_PER_TICKET;
+      selectedCount.textContent = `Boletos seleccionados: ${count}`;
+      totalCost.textContent = `Total a pagar: $${cost.toLocaleString()} MXN`;
+    }
+
+    function selectRandomNumbers() {
+      clearSelection();
+      const numTickets = Math.floor(Math.random() * 11) + 10; // Genera entre 10 y 20 boletos
+      while (selectedNumbers.size < numTickets) {
+        const num = Math.floor(Math.random() * MAX_NUMBERS) + 1;
+        if (!selectedNumbers.has(num)) {
+          const button = numberGrid.children[num - 1];
+          toggleNumber(num, button);
+        }
+      }
+    }
+
+    function clearSelection() {
+      selectedNumbers.clear();
+      document.querySelectorAll('.number-grid button').forEach(btn => btn.classList.remove('selected'));
+      updateSummary();
+    }
+
+    function copyClabe() {
+      const clabeText = document.getElementById('clabe').innerText;
+      navigator.clipboard.writeText(clabeText).then(() => {
+        alert('CLABE copiada al portapapeles');
+      });
+    }
+
+    createGrid();
+  </script>
+</body>
+</html>
